@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted, watch, nextTick } from "vue";
+import { ref, onMounted, nextTick } from "vue";
 import axios from "axios";
 import $ from "jquery";
 import "datatables.net-bs5";
@@ -16,8 +16,7 @@ const fetchProducts = async () => {
   try {
     const response = await axios.get("http://localhost:8000/api/products");
     products.value = response.data.data;
-
-    await nextTick(); // Ensure DOM updates before initializing DataTable
+    await nextTick();
     initializeDataTable();
   } catch (error) {
     console.error("Error fetching products:", error);
@@ -25,39 +24,36 @@ const fetchProducts = async () => {
 };
 
 const initializeDataTable = () => {
-  nextTick(() => {
-    if (dataTableInstance) {
-      dataTableInstance.destroy(); // Destroy the old instance before reinitializing
-    }
+  if (dataTableInstance) {
+    dataTableInstance.destroy(); // Destroy previous instance to prevent duplication
+  }
 
-    dataTableInstance = $(table.value).DataTable({
-      responsive: true,
-      autoWidth: false,
-      paging: true,
-      searching: false, // Search handled manually
-      ordering: true,
-      lengthMenu: [10, 25, 50, 100],
-      columns: [
-        { data: null, title: "No.", render: (data, type, row, meta) => meta.row + 1 }, // Auto-numbering
-        { data: "id", title: "Product ID" },
-        { data: "type", title: "Type" },
-        { data: "brand", title: "Brand" },
-        { data: "model", title: "Model" },
-        { data: "capacity", title: "Capacity" },
-        { data: "quantity", title: "Quantity" },
-      ],
-    });
+  dataTableInstance = $(table.value).DataTable({
+    responsive: true,
+    autoWidth: false,
+    paging: true,
+    searching: false, // Custom search handled
+    ordering: true,
+    lengthMenu: [10, 25, 50, 100],
+    data: products.value, // Use Vue's data array
+    columns: [
+      { data: null, title: "No.", render: (data, type, row, meta) => meta.row + 1 },
+      { data: "id", title: "Product ID" },
+      { data: "type", title: "Type" },
+      { data: "brand", title: "Brand" },
+      { data: "model", title: "Model" },
+      { data: "capacity", title: "Capacity" },
+      { data: "quantity", title: "Quantity" },
+    ],
   });
 };
 
 const searchProduct = async (event) => {
   const query = event.target.value.trim();
-
   try {
     const response = await axios.get(`http://localhost:8000/api/products?search=${query}`);
-    products.value = response.data.data; // Vue reactivity updates the table
+    products.value = response.data.data;
 
-    // Update DataTable dynamically
     if (dataTableInstance) {
       dataTableInstance.clear().rows.add(products.value).draw();
     }
@@ -67,7 +63,6 @@ const searchProduct = async (event) => {
 };
 
 const file = ref(null);
-
 const uploadFile = async () => {
   if (!file.value) {
     alert("Please select a file!");
@@ -79,13 +74,11 @@ const uploadFile = async () => {
 
   try {
     const response = await axios.post("http://localhost:8000/api/upload", formData, {
-      headers: {
-        "Content-Type": "multipart/form-data",
-      },
-      withCredentials: false, // Ensure CORS is allowed
+      headers: { "Content-Type": "multipart/form-data" },
     });
 
     alert(response.data.message);
+    fetchProducts(); // Reload data after upload
   } catch (error) {
     console.error("Error uploading file:", error);
     alert("File upload failed!");
@@ -93,29 +86,21 @@ const uploadFile = async () => {
 };
 
 onMounted(fetchProducts);
-watch(products, initializeDataTable);
 </script>
 
 <template>
-
   <div class="container mt-4">
-
-    <!-- Upload Section -->  
+    <!-- Upload Section -->
     <div class="mb-3 d-flex align-items-center">
       <label class="form-label me-2">Upload Excel File</label>
-      <input type="file" class="form-control flex-grow-1 me-2" @change="(e) => file = e.target.files[0]" />
+      <input type="file" class="form-control flex-grow-1 me-2" @change="(e) => (file = e.target.files[0])" />
       <button class="btn btn-primary px-4" @click="uploadFile">Upload</button>
-    </div>
-
-    <div class="d-flex justify-content-between align-items-center mb-3">
-      <h2 class="text-primary">Product Master List</h2>
     </div>
 
     <!-- Search Bar -->
     <div class="input-group mb-3">
       <span class="input-group-text bg-primary text-white"><i class="bi bi-search"></i></span>
-      <input type="text" class="form-control border-primary" placeholder="Search by Product ID..."
-        @input="searchProduct" />
+      <input type="text" class="form-control border-primary" placeholder="Search by Product ID..." @input="searchProduct" />
     </div>
 
     <!-- Table -->
@@ -133,17 +118,6 @@ watch(products, initializeDataTable);
               <th>Quantity</th>
             </tr>
           </thead>
-          <tbody>
-            <tr v-for="(product, index) in products" :key="product.id">
-              <td class="text-center">{{ index + 1 }}</td>
-              <td>{{ product.id }}</td>
-              <td>{{ product.type }}</td>
-              <td>{{ product.brand }}</td>
-              <td>{{ product.model }}</td>
-              <td>{{ product.capacity }}</td>
-              <td class="text-center">{{ product.quantity }}</td>
-            </tr>
-          </tbody>
         </table>
       </div>
     </div>
