@@ -8,7 +8,6 @@ import "datatables.net-dt/css/dataTables.dataTables.min.css";
 import "bootstrap/dist/css/bootstrap.min.css";
 import "bootstrap-icons/font/bootstrap-icons.css";
 
-
 const products = ref([]);
 const table = ref(null);
 let dataTableInstance = null;
@@ -67,12 +66,47 @@ const searchProduct = async (event) => {
   }
 };
 
+const file = ref(null);
+
+const uploadFile = async () => {
+  if (!file.value) {
+    alert("Please select a file!");
+    return;
+  }
+
+  const formData = new FormData();
+  formData.append("file", file.value);
+
+  try {
+    const response = await axios.post("http://localhost:8000/api/upload", formData, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+      withCredentials: false, // Ensure CORS is allowed
+    });
+
+    alert(response.data.message);
+  } catch (error) {
+    console.error("Error uploading file:", error);
+    alert("File upload failed!");
+  }
+};
+
 onMounted(fetchProducts);
 watch(products, initializeDataTable);
 </script>
 
 <template>
+
   <div class="container mt-4">
+
+    <!-- Upload Section -->  
+    <div class="mb-3 d-flex align-items-center">
+      <label class="form-label me-2">Upload Excel File</label>
+      <input type="file" class="form-control flex-grow-1 me-2" @change="(e) => file = e.target.files[0]" />
+      <button class="btn btn-primary px-4" @click="uploadFile">Upload</button>
+    </div>
+
     <div class="d-flex justify-content-between align-items-center mb-3">
       <h2 class="text-primary">Product Master List</h2>
     </div>
@@ -80,12 +114,8 @@ watch(products, initializeDataTable);
     <!-- Search Bar -->
     <div class="input-group mb-3">
       <span class="input-group-text bg-primary text-white"><i class="bi bi-search"></i></span>
-      <input
-        type="text"
-        class="form-control border-primary"
-        placeholder="Search by Product ID..."
-        @input="searchProduct"
-      />
+      <input type="text" class="form-control border-primary" placeholder="Search by Product ID..."
+        @input="searchProduct" />
     </div>
 
     <!-- Table -->
@@ -130,7 +160,8 @@ watch(products, initializeDataTable);
   background-color: #ffffff;
 }
 
-.table th, .table td {
+.table th,
+.table td {
   text-align: center;
 }
 

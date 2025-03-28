@@ -5,20 +5,24 @@ namespace App\Imports;
 use App\Models\Product;
 use Maatwebsite\Excel\Concerns\ToModel;
 use Maatwebsite\Excel\Concerns\WithHeadingRow;
+use Illuminate\Support\Facades\Log;
 
 class ProductStatusImport implements ToModel, WithHeadingRow
 {
     public function model(array $row)
     {
-        $product = Product::where('id', $row['product_id'])->first();
+        Log::debug($row);
+        $product = Product::where('id', $row['Product ID'])->first();
+
         if ($product) {
-            if ($row['status'] === 'Sold') {
-                $product->quantity -= $row['quantity'];
-            } elseif ($row['status'] === 'Buy') {
-                $product->quantity += $row['quantity'];
+            if ($row['Status'] === 'Sold') {
+                $product->quantity = max(0, $product->quantity - 1);
+            } elseif ($row['Status'] === 'Buy') {
+                $product->quantity += 1;
             }
             $product->save();
         }
+
         return null;
     }
 }

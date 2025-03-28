@@ -3,8 +3,8 @@ import ProductList from "../views/ProductList.vue";
 import Home from "../views/HomeView.vue";
 
 const routes = [
-  { path: "/", component: Home },
-  { path: "/products", component: ProductList },
+  
+  { path: "/", component: ProductList },
 ];
 
 const router = createRouter({

@@ -7,6 +7,8 @@ use App\Models\Product;
 use App\Jobs\ProcessProductUpload;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Imports\ProductStatusImport;
+use App\Imports\ProductsImport;
+
 
 class ProductController extends Controller
 {
@@ -22,14 +24,4 @@ class ProductController extends Controller
         return response()->json(['data' => $query->get()]);
     }
 
-
-    public function upload(Request $request)
-    {
-        $request->validate(['file' => 'required|mimes:xlsx']);
-
-        $filePath = $request->file('file')->store('uploads');
-        ProcessProductUpload::dispatch($filePath);
-
-        return response()->json(['message' => 'File uploaded successfully, processing in background']);
-    }
 }
