@@ -11,7 +11,10 @@ import "bootstrap-icons/font/bootstrap-icons.css";
 const products = ref([]);
 const table = ref(null);
 let dataTableInstance = null;
+let jobId = ref(null);
+let pollingInterval = null;
 
+// Fetch products from API
 const fetchProducts = async () => {
   try {
     const response = await axios.get("http://localhost:8000/api/products");
@@ -23,6 +26,7 @@ const fetchProducts = async () => {
   }
 };
 
+// Initialize DataTable
 const initializeDataTable = () => {
   if (dataTableInstance) {
     dataTableInstance.destroy(); // Destroy previous instance to prevent duplication
@@ -48,20 +52,23 @@ const initializeDataTable = () => {
   });
 };
 
-const searchProduct = async (event) => {
-  const query = event.target.value.trim();
-  try {
-    const response = await axios.get(`http://localhost:8000/api/products?search=${query}`);
-    products.value = response.data.data;
+// Polling function to check job status
+const checkJobStatus = async () => {
+  if (!jobId.value) return;
 
-    if (dataTableInstance) {
-      dataTableInstance.clear().rows.add(products.value).draw();
+  try {
+    const response = await axios.get(`http://localhost:8000/api/job-status/${jobId.value}`);
+    if (response.data.status === "completed") {
+      clearInterval(pollingInterval);
+      jobId.value = null;
+      fetchProducts(); // Refresh products
     }
   } catch (error) {
-    console.error("Error searching products:", error);
+    console.error("Error checking job status:", error);
   }
 };
 
+// Handle file upload and start polling
 const file = ref(null);
 const uploadFile = async () => {
   if (!file.value) {
@@ -78,10 +85,32 @@ const uploadFile = async () => {
     });
 
     alert(response.data.message);
-    fetchProducts(); // Reload data after upload
+
+    // Fetch the latest data
+    await fetchProducts();
+
+    // Update DataTable
+    if (dataTableInstance) {
+      dataTableInstance.clear().rows.add(products.value).draw();
+    }
   } catch (error) {
     console.error("Error uploading file:", error);
     alert("File upload failed!");
+  }
+};
+
+// Search function
+const searchProduct = async (event) => {
+  const query = event.target.value.trim();
+  try {
+    const response = await axios.get(`http://localhost:8000/api/products?search=${query}`);
+    products.value = response.data.data;
+
+    if (dataTableInstance) {
+      dataTableInstance.clear().rows.add(products.value).draw();
+    }
+  } catch (error) {
+    console.error("Error searching products:", error);
   }
 };
 
@@ -100,7 +129,8 @@ onMounted(fetchProducts);
     <!-- Search Bar -->
     <div class="input-group mb-3">
       <span class="input-group-text bg-primary text-white"><i class="bi bi-search"></i></span>
-      <input type="text" class="form-control border-primary" placeholder="Search by Product ID..." @input="searchProduct" />
+      <input type="text" class="form-control border-primary" placeholder="Search by Product ID..."
+        @input="searchProduct" />
     </div>
 
     <!-- Table -->
