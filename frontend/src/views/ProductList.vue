@@ -32,13 +32,13 @@ const initializeDataTable = () => {
     responsive: true,
     autoWidth: false,
     paging: true,
-    searching: false, // Custom search handled
+    searching: false,
     ordering: true,
     lengthMenu: [10, 25, 50, 100],
-    data: products.value, // Use Vue's data array
+    data: products.value,
     columns: [
-      { data: null, title: "No.", render: (data, type, row, meta) => meta.row + 1 },
-      { data: "id", title: "Product ID" },
+      { data: null, title: "No.",className: "text-center", render: (data, type, row, meta) => meta.row + 1 },
+      { data: "id", className: "text-center", title: "Product ID" },
       { data: "type", title: "Type" },
       { data: "brand", title: "Brand" },
       { data: "model", title: "Model" },
