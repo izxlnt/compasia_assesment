@@ -22,7 +22,7 @@
       DB_USERNAME=your_db_user
       DB_PASSWORD=your_db_password
       
-      QUEUE_CONNECTION=redis
+      QUEUE_CONNECTION=database
 
 4️⃣ Run Database Migrations
 
@@ -56,7 +56,7 @@
 1️⃣ Configure Queue
 
   - Ensure your .env file has:
-  - QUEUE_CONNECTION=redis
+  - QUEUE_CONNECTION=database
 
 2️⃣ Start the Queue Worker
 
